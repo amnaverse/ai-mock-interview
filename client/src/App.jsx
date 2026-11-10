@@ -1,5 +1,23 @@
 import { useState } from "react";
 
+const HISTORY_KEY = "mock-interview-history";
+
+const loadHistory = () => {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+  } catch {
+    return [];
+  }
+};
+
+const saveHistory = (list) => {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+  } catch {
+    // storage full or blocked: ignore
+  }
+};
+
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const ROLES = ["MERN Intern", "Frontend Developer", "Backend Developer", "Full Stack Developer"];
 const LEVELS = ["easy", "medium", "hard"];
@@ -33,7 +51,7 @@ export default function App() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+const [history, setHistory] = useState(loadHistory);
   const loadQuestion = async (previous) => {
     setLoading(true);
     setError("");
@@ -75,6 +93,17 @@ export default function App() {
   };
 
   const finish = async () => {
+    const avg = results.reduce((sum, r) => sum + r.score, 0) / results.length;
+const entry = {
+  date: new Date().toISOString(),
+  role,
+  difficulty,
+  average: Number(avg.toFixed(1)),
+  count: results.length,
+};
+const nextHistory = [entry, ...history].slice(0, 10);
+setHistory(nextHistory);
+saveHistory(nextHistory);
     setLoading(true);
     setError("");
     try {
@@ -114,25 +143,49 @@ export default function App() {
           </p>
         )}
 
-        {stage === "setup" && (
-          <section className={card}>
-            <p className="text-slate-300">
-              Choose a role and difficulty. You will get {TOTAL} questions and a summary at the end.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <select value={role} onChange={(e) => setRole(e.target.value)} className={field}>
-                {ROLES.map((r) => <option key={r}>{r}</option>)}
-              </select>
-              <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)} className={field}>
-                {LEVELS.map((l) => <option key={l}>{l}</option>)}
-              </select>
-              <button onClick={start} disabled={loading} className={btn}>
-                {loading ? "Preparing..." : "Start interview"}
-              </button>
-            </div>
-          </section>
-        )}
+       {stage === "setup" && (
+  <section className={card}>
+    <p className="text-slate-300">
+      Choose a role and difficulty. You will get {TOTAL} questions and a summary at the end.
+    </p>
 
+    <div className="flex flex-wrap gap-3">
+      <select value={role} onChange={(e) => setRole(e.target.value)} className={field}>
+        {ROLES.map((r) => <option key={r}>{r}</option>)}
+      </select>
+      <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)} className={field}>
+        {LEVELS.map((l) => <option key={l}>{l}</option>)}
+      </select>
+      <button onClick={start} disabled={loading} className={btn}>
+        {loading ? "Preparing..." : "Start interview"}
+      </button>
+    </div>
+
+    {history.length > 0 && (
+      <div className="space-y-2 border-t border-slate-800 pt-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold">Past interviews</h2>
+          <button
+            onClick={() => { setHistory([]); saveHistory([]); }}
+            className="text-sm text-slate-400 underline"
+          >
+            Clear
+          </button>
+        </div>
+        <ul className="space-y-1 text-sm text-slate-300">
+          {history.map((h, i) => (
+            <li key={i} className="flex justify-between gap-4">
+              <span>
+                {new Date(h.date).toLocaleDateString()} - {h.role} - {h.difficulty}
+              </span>
+              <span className="font-semibold text-amber-400">{h.average}/10</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
+  </section>
+)}
         {stage === "question" && (
           <>
             <div>

@@ -5,11 +5,12 @@ import rateLimit from "express-rate-limit";
 import { askAI } from "./aiClient.js";
 
 const app = express();
+app.set("trust proxy", 1);
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173" }));
 app.use(express.json({ limit: "20kb" }));
-app.use("/api", rateLimit({ windowMs: 60_000, max: 20 }));
+app.use("/api", rateLimit({ windowMs: 15 * 60_000, max: 60 }));
 
 // ---------- Helpers ----------
 
