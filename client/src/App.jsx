@@ -18,7 +18,7 @@ const saveHistory = (list) => {
   }
 };
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "");
 const ROLES = ["MERN Intern", "Frontend Developer", "Backend Developer", "Full Stack Developer"];
 const LEVELS = ["easy", "medium", "hard"];
 const TOTAL = 5;
